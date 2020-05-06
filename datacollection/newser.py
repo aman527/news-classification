@@ -164,6 +164,3 @@ def scrape(num_requests, articles_per_request):
     a_without_descriptions = fetch_articles(num_requests, articles_per_request)
     articles = fetch_descriptions(a_without_descriptions)
     return articles
-
-articles = scrape(10, 20)
-print(articles[:5])
