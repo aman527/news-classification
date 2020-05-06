@@ -1,6 +1,5 @@
 import grequests
 import requests
-import time
 from bs4 import BeautifulSoup
 
 def article_request(num_rows, start_row):
