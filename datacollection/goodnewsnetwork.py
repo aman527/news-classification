@@ -70,7 +70,7 @@ def max_pages(category = 'all'):
     max_pages = max_pages.replace(',', '')
     return int(max_pages)
 
-def scrape_pages(category = 'all', start = 0, stop = None):
+def scrape(category = 'all', start = 0, stop = None):
     """Scrape Good News Network for articles in the given category, starting at page 'start' and ending at 'stop.'
 
     Keyword Arguments:

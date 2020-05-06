@@ -65,7 +65,7 @@ def extract_data(article_cards, category):
             pass
     return articles
 
-def scrape_articles(category, max_results):
+def scrape(category, max_results):
     """Scrape Huffpost for articles in a given category.
 
     Arguments:
