@@ -46,7 +46,7 @@ class Page:
         """Find the articles on a page and return title, url, and description for each.
 
         Returns:
-            list -- list of article dictionaries, each of which contains title, url, and description
+            list -- list of article dictionaries, each of which contains title, category, and url
         """
         soup = parsed_html(self.url())
         article_cards = soup.find_all('div', class_ = 'td_module_3 td_module_wrap td-animation-stack')
