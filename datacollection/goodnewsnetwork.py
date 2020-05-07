@@ -101,12 +101,11 @@ def scrape(category = 'all', start = 0, stop = None):
     
     articles = []
     for i in range(stop):
-        if i % 50 == 0:
-            print(f'Scraping Good News Network page {i}/{stop}')
         page_number = i + start
         current_page = Page(page_number, category)
         articles += current_page.articles()
     
+    print(f'Scraped {stop} pages from Good News Network, now adding descriptions.')
     add_descriptions(articles)
 
     return articles
