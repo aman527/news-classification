@@ -76,7 +76,8 @@ def parse_article_cards(article_cards):
     for card in article_cards:
         article = {
             'headline': card.img['alt'],
-            'url': 'https://www.newser.com'+ card['href']
+            'url': 'https://www.newser.com'+ card['href'],
+            'category': 'good'
         }
         articles.append(article)
     return articles

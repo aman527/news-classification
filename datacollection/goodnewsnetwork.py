@@ -1,4 +1,5 @@
 import requests
+import grequests
 from bs4 import BeautifulSoup
 
 def parsed_html(url):
@@ -25,23 +26,6 @@ class Page:
             url = ''.join((url, f'page/{self.page_number}/'))
         return url
 
-    def article_description(self, article_url):
-        """Get the description of an article from its URL.
-
-        Arguments:
-            url {str} -- URl of the article
-
-        Returns:
-            str -- description of the article
-        """
-        soup = parsed_html(article_url)
-        description_div = soup.find('meta', attrs = {'property': 'og:description'})
-        if not description_div:
-            print(f'Could not find description for article at URL: {article_url}')
-            return
-        description = description_div['content']
-        return description
-
     def articles(self):
         """Find the articles on a page and return title, url, and description for each.
 
@@ -55,11 +39,42 @@ class Page:
             article = {
                 'headline': card.h3.text,
                 'url': card.h3.a['href'],
-                'description': self.article_description(card.h3.a['href']),
                 'category': 'good'
             }
             articles.append(article)
         return articles
+
+def description_responses(articles):
+    """Query the URL of each articles and return the responses.
+
+    Arguments:
+        articles {list} -- list of article dictionaries containing key 'url' and linking to a newser article
+
+    Returns:
+        list -- list of Response objects
+    """
+    urls = (article['url'] for article in articles)
+    reqs = (grequests.get(url) for url in urls)
+    responses = grequests.map(reqs, size = 100)
+    return responses
+
+def add_descriptions(articles):
+    """Add the description for each article into the list of articles.
+
+    Arguments:
+        articles {list} -- list of article dictionaries
+    """
+    responses = description_responses(articles)
+    for article, response in zip(articles, responses):
+        try:
+            response.raise_for_status()
+        except requests.exceptions.HTTPError:
+            url = article['url']
+            print(f'HTTPError: Request for article with URL "{url}" returned status {response.status_code}.')
+        else:
+            soup = BeautifulSoup(response.content, 'lxml')
+            description_div = soup.find('meta', attrs = {'property': 'og:description'})
+            article['description'] = description_div['content']
 
 def max_pages(category = 'all'):
     """Get the number of pages of articles in a given category."""
@@ -84,12 +99,14 @@ def scrape(category = 'all', start = 0, stop = None):
     if not stop:
         stop = max_pages(category)
     
-    total_articles = []
+    articles = []
     for i in range(stop):
         if i % 50 == 0:
             print(f'Scraping Good News Network page {i}/{stop}')
         page_number = i + start
         current_page = Page(page_number, category)
-        total_articles += current_page.articles()
+        articles += current_page.articles()
     
-    return total_articles
+    add_descriptions(articles)
+
+    return articles
