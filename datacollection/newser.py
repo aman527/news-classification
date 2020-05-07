@@ -101,6 +101,7 @@ def fetch_articles(num_requests, articles_per_request):
         rows_per_request = adjusted_num_articles / 3
     else:
         rows_per_request = articles_per_request / 3
+
     r = article_responses(num_requests, rows_per_request)
     cards = article_cards(r)
     articles = parse_article_cards(cards)
@@ -120,14 +121,14 @@ def description_responses(articles):
     responses = grequests.map(reqs, size = 100)
     return responses
 
-def add_descriptions(articles, description_responses):
+def add_descriptions(articles):
     """Add the description for each article into the list of articles.
 
     Arguments:
         articles {list} -- list of article dictionaries
-        responses {list} -- list of Response objects, returned by description_responses()
     """
-    for article, response in zip(articles, description_responses):
+    responses = description_responses(articles)
+    for article, response in zip(articles, responses):
         try:
             response.raise_for_status()
         except requests.exceptions.HTTPError:
@@ -137,19 +138,6 @@ def add_descriptions(articles, description_responses):
             soup = BeautifulSoup(response.content, 'lxml')
             description = soup.find('div', id='divDeck')
             article['description'] = description.text
-
-def fetch_descriptions(articles):
-    """Fetch the descriptions for the given articles, add the description for each into the dict, and return the dict.
-
-    Arguments:
-        articles {list} -- list of the articles
-
-    Returns:
-        list -- list of the articles, but with descriptions!
-    """
-    responses = description_responses(articles)
-    add_descriptions(articles, responses)
-    return articles
 
 def scrape(num_requests, articles_per_request):
     """Scrape newser.com for depressing articles and return the articles with headline, description, and URL.
@@ -161,6 +149,6 @@ def scrape(num_requests, articles_per_request):
     Returns:
         list -- list of articles, where each article is a dict with keys 'headline,' 'description,' and 'url.'
     """
-    a_without_descriptions = fetch_articles(num_requests, articles_per_request)
-    articles = fetch_descriptions(a_without_descriptions)
+    articles = fetch_articles(num_requests, articles_per_request)
+    add_descriptions(articles)
     return articles
