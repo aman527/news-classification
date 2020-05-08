@@ -3,46 +3,10 @@ import grequests
 from bs4 import BeautifulSoup
 
 def parsed_html(url):
+    """Return the parsed HTML for a given webpage from the URL."""
     response = requests.get(url)
     soup = BeautifulSoup(response.content, 'lxml')
     return soup
-
-class Page:
-    """A page on the Good News Network site."""
-    def __init__(self, page_number, category = 'all'):
-        self.page_number = page_number
-        self.category = category
-
-    def url(self):
-        """Return the URL for this page."""
-        url = 'https://www.goodnewsnetwork.org/category/news/'
-        allowed_categories = ['usa', 'world', 'inspiring', 'animals', 'heroes']
-        if self.category.lower() in allowed_categories:
-            url = ''.join((url, self.category, '/'))
-        elif self.category.lower() != 'all':
-            raise Exception(f'Invalid category name {self.category}. Expected category in {allowed_categories}')
-
-        if self.page_number > 1:
-            url = ''.join((url, f'page/{self.page_number}/'))
-        return url
-
-    def articles(self):
-        """Find the articles on a page and return title, url, and description for each.
-
-        Returns:
-            list -- list of article dictionaries, each of which contains title, category, and url
-        """
-        soup = parsed_html(self.url())
-        article_cards = soup.find_all('div', class_ = 'td_module_3 td_module_wrap td-animation-stack')
-        articles = []
-        for card in article_cards:
-            article = {
-                'headline': card.h3.text,
-                'url': card.h3.a['href'],
-                'category': 'good'
-            }
-            articles.append(article)
-        return articles
 
 def description_responses(articles):
     """Query the URL of each articles and return the responses.
@@ -76,35 +40,84 @@ def add_descriptions(articles):
             description_div = soup.find('meta', attrs = {'property': 'og:description'})
             article['description'] = description_div['content']
 
-def max_pages(category = 'all'):
+def max_pages():
     """Get the number of pages of articles in a given category."""
-    category_page = Page(page_number = 1, category = category)
-    soup = parsed_html(category_page.url())
+    url = build_url(1)
+    soup = parsed_html(url)
     nav_div = soup.find('div', class_='page-nav td-pb-padding-side')
     max_pages = nav_div.find('a', class_='last', attrs = {'title': True}).text
     max_pages = max_pages.replace(',', '')
     return int(max_pages)
 
-def scrape(category = 'all', start = 0, stop = None):
-    """Scrape Good News Network for articles in the given category, starting at page 'start' and ending at 'stop.'
+def build_url(page_number):
+    """Return the URL for a given page."""
+    url = f'https://www.goodnewsnetwork.org/category/news/page/{page_number}'
+    return url
+
+def article_responses(stop):
+    """Get the responses to querying the HTML of Good News Network pages."""
+    urls = (build_url(i) for i in range(stop))
+    reqs = (grequests.get(url) for url in urls)
+    responses = grequests.map(reqs, size = 10)
+    return responses
+
+def article_cards(responses):
+    """Return a list of HTML elements that contain the title and URL of each article, or 'cards.'
+
+    Arguments:
+        responses {list} -- list of Response objects, returned by get_responses()
+
+    Returns:
+        list -- a list of article cards, which can be parsed by parse_article_cards()
+    """
+    article_cards = []
+    for i, response in enumerate(responses):
+        try:
+            response.raise_for_status()
+        except requests.exceptions.HTTPError:
+            print(f'HTTPError: Request {i} returned status {response.status_code}.')
+        else:
+            soup = BeautifulSoup(response.content, 'lxml')
+            cards = soup.find_all('div', class_ = 'td_module_3 td_module_wrap td-animation-stack')
+            article_cards += cards
+    return article_cards
+
+def parse_cards(article_cards):
+    """Parse a list of HTML article cards and return a list of dictionaries containing the headline and URL of each article.
+
+    Arguments:
+        article_cards {list} -- list of article cards, returned by get_article_cards
+
+    Returns:
+        list -- list of dictionaries containing information about each article.
+    """
+    articles = []
+    for card in article_cards:
+        article = {
+            'headline': card.h3.text,
+            'url': card.h3.a['href'],
+            'category': 'good'
+        }
+        articles.append(article)
+    return articles
+
+def scrape(stop = None):
+    """Scrape Good News Network for articles, ending at page number 'stop.'
 
     Keyword Arguments:
         category {str} -- the news category to return articles for (default: {'all'})
-        start {int} -- the starting page (default: {0})
         stop {int} -- the ending page. if None, it returns results from every page. (default: {None})
 
     Returns:
         list -- list of dictionaries containing the article information.
     """
     if not stop:
-        stop = max_pages(category)
+        stop = max_pages()
     
-    articles = []
-    for i in range(stop):
-        page_number = i + start
-        current_page = Page(page_number, category)
-        articles += current_page.articles()
-    
+    responses = article_responses(stop)
+    cards = article_cards(responses)
+    articles = parse_cards(cards)
+
     print(f'Scraped {stop} pages from Good News Network, now adding descriptions.')
     add_descriptions(articles)
 
