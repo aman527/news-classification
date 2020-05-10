@@ -1,2 +1,4 @@
 .vscode/*
 venv/*
+datacollection/.ipynb_checkpoints/*
+datacollection/__pycache__/*
