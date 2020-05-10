@@ -76,8 +76,8 @@ def article_cards(responses):
             response.raise_for_status()
         except requests.exceptions.HTTPError:
             print(f'HTTPError: Request {i} returned status {response.status_code}.')
-        except Exception as e:
-            print(f"Encountered exception {e} when handling response {i}")
+        except:
+            print(f"Encountered exception when handling response {i}")
         else:
             soup = BeautifulSoup(response.content, 'lxml')
             cards = soup.find_all('div', class_ = 'td_module_3 td_module_wrap td-animation-stack')
