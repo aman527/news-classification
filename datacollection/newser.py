@@ -57,6 +57,8 @@ def article_cards(responses):
             response.raise_for_status()
         except requests.exceptions.HTTPError:
             print(f'HTTPError: Request {i} returned status {response.status_code}.')
+        except:
+            pass
         else:
             soup = BeautifulSoup(response.content, 'lxml')
             cards = soup.find_all('a', class_='aGridSquareLink')
@@ -134,6 +136,9 @@ def add_descriptions(articles):
         except requests.exceptions.HTTPError:
             url = article['url']
             print(f'HTTPError: Request for article with URL "{url}" returned status {response.status_code}.')
+        except:
+            # This is definitely bad practice but I'm not sure what the right solution is to ignore any miscellaneous errors
+            pass
         else:
             soup = BeautifulSoup(response.content, 'lxml')
             description = soup.find('div', id='divDeck')
