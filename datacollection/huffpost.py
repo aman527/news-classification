@@ -1,22 +1,15 @@
 import requests
 
 def build_url(category):
-    """Build the resource URL given the news category (good or bad).
+    """Build the resource URL given the news category.
 
     Arguments:
         category {str} -- news category by which to filter results
 
-    Raises:
-        Exception: thrown when category is invalid
-
     Returns:
         str -- resource URL to query
     """
-    allowed_categories = ['good', 'bad']
-    if category.lower() in allowed_categories:
-        url = f'https://www.huffpost.com/api/topic/{category}-news/cards'
-    else:
-        raise Exception(f'Invalid category name {category}. Excpected category in {allowed_categories}')
+    url = f'https://www.huffpost.com/api/topic/{category}/cards'
     return url
 
 def query(url, max_results = 100):

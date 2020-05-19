@@ -35,6 +35,8 @@ def add_descriptions(articles):
         except requests.exceptions.HTTPError:
             url = article['url']
             print(f'HTTPError: Request for article with URL "{url}" returned status {response.status_code}.')
+        except:
+            pass
         else:
             soup = BeautifulSoup(response.content, 'lxml')
             description_div = soup.find('meta', attrs = {'property': 'og:description'})
