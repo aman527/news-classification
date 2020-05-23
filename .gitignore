@@ -3,3 +3,4 @@ venv/*
 datacollection/.ipynb_checkpoints/*
 datacollection/__pycache__/*
 .ipynb_checkpoints/*
+data/external/*
